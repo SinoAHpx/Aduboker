@@ -2,6 +2,8 @@
 
 [Auzre Speech Service](https://azure.microsoft.com/en-us/services/cognitive-services/speech-services/) based audio book generator.
 
+Available on Nuget, too.
+
 ## About
 
 AHpx@yandex.com
