@@ -3,13 +3,21 @@ using Aduboker.Core.Services;
 
 var generator = new AudbokerService
 {
-    ChapterService = await File.ReadAllTextAsync(@"C:\Users\ahpx\Downloads\信息全知者.txt"),
     Logger = new BasicLogger(),
     OutputDir = new DirectoryInfo(@"C:\Users\ahpx\Desktop\Audboker"),
-    TTSService = new TTSService(args[0])
+    TTSService = new TTSService("")
+    {
+        Config = new TTSConfig
+        {
+            Rate = 1.1,
+            Region = "eastus"
+        }
+    }
 };
 
-await generator.GenerateAsync(new Range(420, 450));
+var text = await File.ReadAllTextAsync(@"C:\Users\ahpx\Desktop\ll.txt");
+
+await generator.GenerateAsync(text, "如何以p社游戏世界观为基础写一出悲剧?", 500);
 
 class BasicLogger : ILogger
 {

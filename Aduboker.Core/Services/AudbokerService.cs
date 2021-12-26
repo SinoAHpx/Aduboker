@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using Aduboker.Core.Model;
+using MoreLinq;
 using Polly;
 
 namespace Aduboker.Core.Services;
@@ -65,6 +67,60 @@ public class AudbokerService
         }
     }
 
+    public async Task GenerateAsync(string text, string name, int batchSize = 2000)
+    {
+        var batches = text.Batch(batchSize)
+            .Select(x => string.Concat(x))
+            .Select(x => new StringBuilder(x))
+            .ToList();
+
+        var concatBytes = new List<(int, byte[])>();
+        var tWatch = new Stopwatch();
+        tWatch.Start();
+
+        Logger.Log($"Text {name} has {text.Length} characters and {batches.Count} batches");
+        foreach (var batch in batches)
+        {
+            await Policy
+                .Handle<Exception>()
+                .RetryAsync(5, (exception, i) =>
+                {
+                    Logger.Log($"Request has failed, retrying for {i} time", exception);
+                })
+                .ExecuteAsync(async () =>
+                {
+                    var watch = new Stopwatch();
+                    watch.Start();
+                    
+                    var index = batches.IndexOf(batch);
+                    var chunk = batch.ToString();
+
+                    Logger.Log($"Requesting for chunk {index}");
+                    var bytes = await GenerateSingleAsync((name, batches.IndexOf(batch)), chunk);
+                    
+                    concatBytes.Add((index, bytes));
+                    
+                    watch.Stop();
+
+                    Logger.Log($"Successfully requested for chunk {index} in {watch.Elapsed.TotalSeconds:F1}s");
+                });
+        }
+
+        var audio = ConcatAudio(concatBytes);
+
+        var invalid = new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars());
+        name = invalid
+            .Aggregate(name, (current, c) => current.Replace(c.ToString(), string.Empty));
+
+        var path = Path.Combine(OutputDir.ToString(), $"{name}.mp3");
+        
+        await File.WriteAllBytesAsync(path, audio);
+        
+        tWatch.Stop();
+
+        Logger.Log($"Audio generating of {name} has completed in {tWatch.Elapsed.TotalSeconds:F1}");
+    }
+
     private byte[] ConcatAudio(IEnumerable<(int, byte[])> audio)
     {
         var waitList = audio
@@ -83,9 +139,18 @@ public class AudbokerService
     {
         var result = await Policy
             .Handle<Exception>()
-            .RetryAsync(5, (exception, i) =>
+            .RetryAsync(5, async (exception, i) =>
             {
-                Logger.Log($"Some single request has failed, retrying for {i} time", exception);
+                if (exception.Message.Contains("(Too Many Requests)"))
+                {
+                    Logger.Log("Too frequent requests, waiting for a while...");
+                    await Task.Delay(TimeSpan.FromMinutes(1));
+                    Logger.Log("Waiting has completed, restarting...");
+                }
+                else
+                {
+                    Logger.Log($"Some single request has failed, retrying for {i} time", exception);
+                }
             })
             .ExecuteAndCaptureAsync(async () =>
             {

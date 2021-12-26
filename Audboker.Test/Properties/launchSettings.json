@@ -2,7 +2,7 @@
   "profiles": {
     "Audboker.Test": {
       "commandName": "Project",
-      "commandLineArgs": "ab5fd36462b346b7a90d342055222c0b"
+      "commandLineArgs": ""
     }
   }
 }

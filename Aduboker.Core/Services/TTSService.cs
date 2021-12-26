@@ -15,14 +15,7 @@ public class TTSService
         SubscriptionKey = subscriptionKey;
     }
 
-    public TTSConfig Config { get; set; } = new()
-    {
-        Pitch = 0,
-        Rate = 1.0,
-        Voice = "zh-CN-XiaoxiaoNeural",
-        Format = "audio-16khz-32kbitrate-mono-mp3",
-        Region = "eastasia"
-    };
+    public TTSConfig Config { get; set; } = new();
 
     public async Task<byte[]> RequestSpeechAsync(string text)
     {

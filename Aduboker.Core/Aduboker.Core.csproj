@@ -9,6 +9,9 @@
     <Copyright>Copyright 2021 AHpx.</Copyright>
     <PackageProjectUrl>https://github.com/SinoAHpx/Audboker</PackageProjectUrl>
 	<PackageLicenseExpression>WTFPL</PackageLicenseExpression>
+	<PackageVersion>1.1.0</PackageVersion>
+	<Title>Aduboker.Core</Title>
+	<Authors>AHpx</Authors>
   </PropertyGroup>
 
   <ItemGroup>
